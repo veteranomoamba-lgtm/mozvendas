@@ -10,19 +10,25 @@ import { Loader2 } from "lucide-react";
 
 interface Category { id: string; name: string; }
 
-export default function EditProductPage({ params }: { params: { id: string } }) {
+export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [product, setProduct] = useState<any>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [productId, setProductId] = useState<string>("");
+
+  useEffect(() => {
+    params.then(p => setProductId(p.id));
+  }, [params]);
 
   if (status === "loading") return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   if (!session) { redirect("/?auth=login"); }
 
   useEffect(() => {
+    if (!productId || !session) return;
     Promise.all([
-      fetch(`/api/products/${params.id}`).then(r => r.json()),
+      fetch(`/api/products/${productId}`).then(r => r.json()),
       fetch("/api/categories").then(r => r.json()),
     ]).then(([p, c]) => {
       if (p.error) { toast.error("Produto não encontrado."); router.push("/my-products"); return; }
@@ -33,10 +39,10 @@ export default function EditProductPage({ params }: { params: { id: string } }) 
       setProduct({ ...p, images: JSON.parse(p.images || "[]") });
       setCategories(c);
     }).finally(() => setIsLoading(false));
-  }, [params.id]);
+  }, [productId, session]);
 
   const handleSubmit = async (data: any) => {
-    const res = await fetch(`/api/products/${params.id}`, {
+    const res = await fetch(`/api/products/${productId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...data, images: data.images }),
