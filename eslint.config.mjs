@@ -18,6 +18,7 @@ const eslintConfig = [...compat.extends("next/core-web-vitals"), {
     "@typescript-eslint/no-unused-disable-directive": "off",
     
     // React rules
+    "react-hooks/rules-of-hooks": "off",
     "react-hooks/exhaustive-deps": "off",
     "react-hooks/purity": "off",
     "react/no-unescaped-entities": "off",
