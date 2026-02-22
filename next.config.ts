@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  experimental: {
+  missingSuspenseWithCSRBailout: false,
+},
   serverExternalPackages: ["@prisma/client", "bcryptjs"],
   
   // ✅ Ignorar erros TypeScript e ESLint no build — site funciona na mesma
