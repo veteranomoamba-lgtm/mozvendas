@@ -1,0 +1,156 @@
+// ============================================================
+// MOZ VENDAS — Schema Prisma Corrigido para Vercel & MongoDB
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  email         String   @unique
+  name          String?
+  password      String
+  role          String   @default("BUYER")
+  isBanned      Boolean  @default(false)
+  bannedReason  String?
+  avatar        String?
+  phone         String?
+  province      String?
+  bio           String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  products         Product[]
+  sentMessages     Message[]  @relation("SentMessages")
+  receivedMessages Message[]  @relation("ReceivedMessages")
+  reportsMade      Report[]   @relation("ReportsMade")
+  reportsReceived  Report[]   @relation("ReportsReceived")
+  sessions         Session[]
+  accounts         Account[]
+  cartItems        CartItem[]
+
+
+}
+
+model Category {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  icon        String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  products    Product[]
+}
+
+model Product {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  price       Float
+  images      String    
+  categoryId  String?   @db.ObjectId
+  category    Category? @relation(fields: [categoryId], references: [id])
+  sellerId    String    @db.ObjectId
+  seller      User      @relation(fields: [sellerId], references: [id])
+  province    String?
+  isActive    Boolean   @default(true)
+  views       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  reports     Report[]
+  cartItems   CartItem[]
+
+  @@index([sellerId])
+  @@index([categoryId])
+}
+
+model CartItem {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String   @db.ObjectId
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, productId])
+}
+
+model Message {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  content    String
+  senderId   String   @db.ObjectId
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId String   @db.ObjectId
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  productId  String?  @db.ObjectId
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+}
+
+model Report {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  type              String   
+  reason            String
+  description       String?
+  status            String   @default("PENDING")
+  reporterId        String   @db.ObjectId
+  reporter          User     @relation("ReportsMade", fields: [reporterId], references: [id])
+  reportedUserId    String?  @db.ObjectId
+  reportedUser      User?    @relation("ReportsReceived", fields: [reportedUserId], references: [id])
+  reportedProductId String?  @db.ObjectId
+  reportedProduct   Product? @relation(fields: [reportedProductId], references: [id])
+  reviewedBy        String?
+  reviewNotes       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([status])
+}
+
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique
+  userId       String   @db.ObjectId
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
