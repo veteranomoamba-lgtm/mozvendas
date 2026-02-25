@@ -199,9 +199,9 @@ export function AuthForms({ defaultTab = "login", onSuccess }: AuthFormsProps) {
                     {...loginForm.register("email")}
                   />
                 </div>
-                {loginForm.formState.issues.email && (
+                {loginForm.formState.errors.email && (
                   <p className="text-sm text-destructive">
-                    {loginForm.formState.issues.email.message}
+                    {loginForm.formState.errors.email.message}
                   </p>
                 )}
               </div>
@@ -230,9 +230,9 @@ export function AuthForms({ defaultTab = "login", onSuccess }: AuthFormsProps) {
                     )}
                   </Button>
                 </div>
-                {loginForm.formState.issues.password && (
+                {loginForm.formState.errors.password && (
                   <p className="text-sm text-destructive">
-                    {loginForm.formState.issues.password.message}
+                    {loginForm.formState.errors.password.message}
                   </p>
                 )}
               </div>
@@ -312,9 +312,9 @@ export function AuthForms({ defaultTab = "login", onSuccess }: AuthFormsProps) {
                     {...registerForm.register("name")}
                   />
                 </div>
-                {registerForm.formState.issues.name && (
+                {registerForm.formState.errors.name && (
                   <p className="text-sm text-destructive">
-                    {registerForm.formState.issues.name.message}
+                    {registerForm.formState.errors.name.message}
                   </p>
                 )}
               </div>
@@ -331,9 +331,9 @@ export function AuthForms({ defaultTab = "login", onSuccess }: AuthFormsProps) {
                     {...registerForm.register("email")}
                   />
                 </div>
-                {registerForm.formState.issues.email && (
+                {registerForm.formState.errors.email && (
                   <p className="text-sm text-destructive">
-                    {registerForm.formState.issues.email.message}
+                    {registerForm.formState.errors.email.message}
                   </p>
                 )}
               </div>
@@ -386,9 +386,9 @@ export function AuthForms({ defaultTab = "login", onSuccess }: AuthFormsProps) {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">Mínimo 8 caracteres, com pelo menos 1 letra maiúscula e 1 número.</p>
-                {registerForm.formState.issues.password && (
+                {registerForm.formState.errors.password && (
                   <p className="text-sm text-destructive">
-                    {registerForm.formState.issues.password.message}
+                    {registerForm.formState.errors.password.message}
                   </p>
                 )}
               </div>
@@ -407,9 +407,9 @@ export function AuthForms({ defaultTab = "login", onSuccess }: AuthFormsProps) {
                     {...registerForm.register("confirmPassword")}
                   />
                 </div>
-                {registerForm.formState.issues.confirmPassword && (
+                {registerForm.formState.errors.confirmPassword && (
                   <p className="text-sm text-destructive">
-                    {registerForm.formState.issues.confirmPassword.message}
+                    {registerForm.formState.errors.confirmPassword.message}
                   </p>
                 )}
               </div>
