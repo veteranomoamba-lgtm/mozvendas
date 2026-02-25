@@ -97,7 +97,14 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (token) {
-        session.user = { id: token.id, email: token.email, name: token.name, role: token.role, isBanned: token.isBanned, avatar: token.avatar };
+        session.user = {
+          id: (token.id as string) || "",
+          email: (token.email as string) || "",
+          name: (token.name as string) || "",
+          role: (token.role as string) || "BUYER",
+          isBanned: (token.isBanned as boolean) || false,
+          avatar: (token.avatar as string) || "",
+        };
       }
       return session;
     },
