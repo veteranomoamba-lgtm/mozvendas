@@ -1,9 +1,10 @@
 "use client";
 
+export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { AuthForms } from "@/components/auth/auth-forms";
@@ -87,7 +88,7 @@ type ViewType = "home" | "product" | "new-product" | "edit-product" | "messages"
 
 export default function Home() {
   const { data: session, status } = useSession();
-  const searchParams = useSearchParams();
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
   const router = useRouter();
 
   // State
