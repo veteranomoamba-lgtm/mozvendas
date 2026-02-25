@@ -28,8 +28,16 @@ import {
   SheetDescription,
   SheetHeader,
   SheetTitle,
+  SheetTrigger,
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
@@ -47,6 +55,8 @@ import {
   Trash2,
   AlertTriangle,
   ShoppingCart,
+  Search,
+  SlidersHorizontal,
 } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { ptBR as dateLocale } from "date-fns/locale";
@@ -397,41 +407,106 @@ export default function HomeClient() {
 
       default:
         return (
-          <div className="space-y-6">
-            {/* Product Filters */}
-            <ProductFilters
-              categories={categories}
-              filters={filters}
-              onFiltersChange={handleFiltersChange}
-            />
-
-            {/* Results Count */}
-            <p className="text-sm text-muted-foreground">
-              {ptBR.products.showing} {products.length} {ptBR.products.of} {pagination.total} {ptBR.products.title.toLowerCase()}
-            </p>
-
-            {/* Products Grid */}
-            {isLoading ? (
-              <div className="flex items-center justify-center min-h-[400px]">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-              </div>
-            ) : products.length === 0 ? (
-              <div className="text-center py-12">
-                <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h2 className="text-xl font-semibold mb-2">{ptBR.products.noProducts}</h2>
-                <p className="text-muted-foreground">
-                  {ptBR.products.noProductsDescription}
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                {products.map((product) => (
-                  <div key={product.id} onClick={() => handleViewProduct(product.id)}>
-                    <ProductCard product={product} onClick={() => handleProductClick(product)} />
+          <div className="flex gap-3">
+            {/* Sidebar de Filtros - sempre visível como Facebook Marketplace */}
+            <aside className="w-36 sm:w-48 md:w-56 flex-shrink-0">
+              <div className="sticky top-4 space-y-1">
+                {/* Pesquisa - só desktop */}
+                <div className="hidden md:block mb-3">
+                  <div className="relative">
+                    <Search className="absolute left-2 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input
+                      placeholder="Pesquisar..."
+                      className="pl-8 h-9 text-sm"
+                      value={filters.search}
+                      onChange={(e) => handleFiltersChange({ search: e.target.value })}
+                    />
                   </div>
+                </div>
+
+                {/* Pesquisa mobile simples */}
+                <div className="md:hidden mb-2">
+                  <div className="relative">
+                    <Search className="absolute left-2 top-2 h-3 w-3 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar..."
+                      className="pl-7 h-8 text-xs"
+                      value={filters.search}
+                      onChange={(e) => handleFiltersChange({ search: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* Categorias verticais */}
+                <button
+                  onClick={() => handleFiltersChange({ categoryId: "" })}
+                  className={`w-full text-left text-xs md:text-sm px-2 py-2 rounded-lg transition-colors font-medium ${!filters.categoryId ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+                >
+                  🏠 <span className="hidden sm:inline">Todas</span>
+                </button>
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => handleFiltersChange({ categoryId: cat.id })}
+                    className={`w-full text-left text-xs md:text-sm px-2 py-2 rounded-lg transition-colors ${filters.categoryId === cat.id ? "bg-primary text-primary-foreground font-medium" : "hover:bg-muted"}`}
+                  >
+                    <span className="line-clamp-1">{cat.name}</span>
+                  </button>
                 ))}
+
+                {/* Ordenar - só desktop */}
+                <div className="hidden md:block pt-2">
+                  <label className="text-xs font-medium text-muted-foreground uppercase block mb-1">Ordenar</label>
+                  <Select
+                    value={`${filters.sortBy}-${filters.sortOrder}`}
+                    onValueChange={(value) => {
+                      const [sortBy, sortOrder] = value.split("-");
+                      handleFiltersChange({ sortBy, sortOrder });
+                    }}
+                  >
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="createdAt-desc">Mais recentes</SelectItem>
+                      <SelectItem value="price-asc">Menor preço</SelectItem>
+                      <SelectItem value="price-desc">Maior preço</SelectItem>
+                      <SelectItem value="views-desc">Mais vistos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-            )}
+            </aside>
+
+            {/* Conteúdo principal */}
+            <div className="flex-1 min-w-0">
+
+
+              {/* Contagem */}
+              <p className="text-xs text-muted-foreground mb-3">
+                {products.length} de {pagination.total} produtos
+              </p>
+
+              {/* Grid de Produtos */}
+              {isLoading ? (
+                <div className="flex items-center justify-center min-h-[400px]">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : products.length === 0 ? (
+                <div className="text-center py-12">
+                  <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h2 className="text-xl font-semibold mb-2">{ptBR.products.noProducts}</h2>
+                  <p className="text-muted-foreground">{ptBR.products.noProductsDescription}</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                  {products.map((product) => (
+                    <div key={product.id} onClick={() => handleViewProduct(product.id)}>
+                      <ProductCard product={product} onClick={() => handleProductClick(product)} />
+                    </div>
+                  ))}
+                </div>
+              )}
 
             {/* Pagination */}
             {pagination.totalPages > 1 && (
