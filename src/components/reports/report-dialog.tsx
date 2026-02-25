@@ -137,9 +137,9 @@ export function ReportDialog({
                 ))}
               </SelectContent>
             </Select>
-            {form.formState.issues.reason && (
+            {form.formState.errors.reason && (
               <p className="text-sm text-destructive">
-                {form.formState.issues.reason.message}
+                {form.formState.errors.reason.message}
               </p>
             )}
           </div>

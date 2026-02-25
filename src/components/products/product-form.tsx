@@ -153,9 +153,9 @@ export function ProductForm({
               placeholder={ptBR.products.productTitlePlaceholder}
               {...form.register("title")}
             />
-            {form.formState.issues.title && (
+            {form.formState.errors.title && (
               <p className="text-sm text-destructive">
-                {form.formState.issues.title.message}
+                {form.formState.errors.title.message}
               </p>
             )}
           </div>
@@ -169,9 +169,9 @@ export function ProductForm({
               rows={5}
               {...form.register("description")}
             />
-            {form.formState.issues.description && (
+            {form.formState.errors.description && (
               <p className="text-sm text-destructive">
-                {form.formState.issues.description.message}
+                {form.formState.errors.description.message}
               </p>
             )}
           </div>
@@ -186,9 +186,9 @@ export function ProductForm({
               placeholder={ptBR.products.pricePlaceholder}
               {...form.register("price", { valueAsNumber: true })}
             />
-            {form.formState.issues.price && (
+            {form.formState.errors.price && (
               <p className="text-sm text-destructive">
-                {form.formState.issues.price.message}
+                {form.formState.errors.price.message}
               </p>
             )}
           </div>
