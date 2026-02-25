@@ -536,6 +536,7 @@ export default function HomeClient() {
                 </Button>
               </div>
             )}
+            </div>
           </div>
         );
     }
