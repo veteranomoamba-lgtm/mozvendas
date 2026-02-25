@@ -1,13 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Eye, DollarSign } from "lucide-react";
+import { Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR as dateLocale } from "date-fns/locale";
-import ptBR from "@/lib/translations/pt-BR";
 
 interface ProductCardProps {
   product: {
@@ -28,65 +25,61 @@ interface ProductCardProps {
       name: string;
     } | null;
   };
+  onClick?: () => void;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, onClick }: ProductCardProps) {
   const images = JSON.parse(product.images) as string[];
   const mainImage = images[0] || "/placeholder.svg";
 
   return (
-    <Link href={`/product/${product.id}`}>
-      <Card className="h-full overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-        <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+    <div
+      onClick={onClick}
+      className="cursor-pointer group"
+    >
+      <Card className="overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-200 bg-card">
+        {/* Imagem quadrada como Facebook Marketplace */}
+        <div className="relative aspect-square overflow-hidden bg-muted">
           <img
             src={mainImage}
             alt={product.title}
-            className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
+            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
           />
           {product.category && (
-            <Badge className="absolute top-2 left-2" variant="secondary">
+            <Badge
+              className="absolute top-2 left-2 text-xs"
+              variant="secondary"
+            >
               {product.category.name}
             </Badge>
           )}
         </div>
-        <CardContent className="p-4">
-          <h3 className="font-semibold text-lg line-clamp-1 mb-1">
-            {product.title}
-          </h3>
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-            {product.description}
-          </p>
-          <div className="flex items-center gap-1 text-xl font-bold text-primary">
-            <DollarSign className="h-5 w-5" />
+
+        {/* Info abaixo da imagem — compacto como Facebook */}
+        <div className="p-2">
+          <p className="font-bold text-base text-foreground">
             MT {product.price.toLocaleString("pt-MZ", { minimumFractionDigits: 2 })}
-          </div>
-        </CardContent>
-        <CardFooter className="p-4 pt-0 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6">
-              <AvatarImage src={product.seller.avatar || ""} />
-              <AvatarFallback>
-                {product.seller.name?.charAt(0).toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-sm text-muted-foreground">
-              {product.seller.name}
-            </span>
-          </div>
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Eye className="h-3 w-3" />
-              {product.views}
-            </div>
-            <span>
+          </p>
+          <p className="text-sm text-foreground line-clamp-1 font-medium">
+            {product.title}
+          </p>
+          <p className="text-xs text-muted-foreground line-clamp-1">
+            {product.seller.name}
+          </p>
+          <div className="flex items-center justify-between mt-1">
+            <p className="text-xs text-muted-foreground">
               {formatDistanceToNow(new Date(product.createdAt), {
                 addSuffix: true,
                 locale: dateLocale,
               })}
-            </span>
+            </p>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Eye className="h-3 w-3" />
+              {product.views}
+            </div>
           </div>
-        </CardFooter>
+        </div>
       </Card>
-    </Link>
+    </div>
   );
 }

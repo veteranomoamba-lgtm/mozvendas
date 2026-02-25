@@ -87,7 +87,13 @@ type ViewType = "home" | "product" | "new-product" | "edit-product" | "messages"
 
 export default function HomeClient() {
   const { data: session, status } = useSession();
-  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const [searchParams, setSearchParams] = useState(() => 
+    typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams()
+  );
+  
+  useEffect(() => {
+    setSearchParams(new URLSearchParams(window.location.search));
+  }, []);
   const router = useRouter();
 
   // State
@@ -418,10 +424,10 @@ export default function HomeClient() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {products.map((product) => (
                   <div key={product.id} onClick={() => handleViewProduct(product.id)}>
-                    <ProductCard product={product} />
+                    <ProductCard product={product} onClick={() => handleProductClick(product)} />
                   </div>
                 ))}
               </div>
@@ -941,7 +947,7 @@ function MyProductsView({ onEdit }: { onEdit: (id: string) => void }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((product) => (
             <div key={product.id} className="relative group">
-              <ProductCard product={product} />
+              <ProductCard product={product} onClick={() => handleProductClick(product)} />
               <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button size="sm" variant="secondary" onClick={() => onEdit(product.id)}>
                   <Edit className="h-4 w-4" />
