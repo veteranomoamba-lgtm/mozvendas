@@ -407,16 +407,19 @@ export default function HomeClient() {
 
       default:
         return (
-          <div className="flex gap-3">
-            {/* Sidebar de Filtros - sempre visível como Facebook Marketplace */}
-            <aside className="w-36 sm:w-48 md:w-56 flex-shrink-0">
-              <div className="sticky top-4 space-y-1">
-                {/* Pesquisa - só desktop */}
-                <div className="hidden md:block mb-3">
+          <div className="flex gap-4">
+            {/* Sidebar de Filtros - apenas desktop */}
+            <aside className="hidden md:block w-56 flex-shrink-0">
+              <div className="sticky top-4 bg-card rounded-lg border p-4 space-y-5">
+                <h3 className="font-semibold text-sm">Filtrar</h3>
+                
+                {/* Pesquisa */}
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground uppercase">Pesquisar</label>
                   <div className="relative">
                     <Search className="absolute left-2 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                     <Input
-                      placeholder="Pesquisar..."
+                      placeholder="Buscar produtos..."
                       className="pl-8 h-9 text-sm"
                       value={filters.search}
                       onChange={(e) => handleFiltersChange({ search: e.target.value })}
@@ -424,39 +427,53 @@ export default function HomeClient() {
                   </div>
                 </div>
 
-                {/* Pesquisa mobile simples */}
-                <div className="md:hidden mb-2">
-                  <div className="relative">
-                    <Search className="absolute left-2 top-2 h-3 w-3 text-muted-foreground" />
+                {/* Categorias */}
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground uppercase">Categoria</label>
+                  <div className="space-y-1">
+                    <button
+                      onClick={() => handleFiltersChange({ categoryId: "" })}
+                      className={`w-full text-left text-sm px-2 py-1.5 rounded hover:bg-muted transition-colors ${!filters.categoryId ? "bg-primary/10 text-primary font-medium" : ""}`}
+                    >
+                      Todas
+                    </button>
+                    {categories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => handleFiltersChange({ categoryId: cat.id })}
+                        className={`w-full text-left text-sm px-2 py-1.5 rounded hover:bg-muted transition-colors ${filters.categoryId === cat.id ? "bg-primary/10 text-primary font-medium" : ""}`}
+                      >
+                        {cat.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Preço */}
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground uppercase">Preço (MT)</label>
+                  <div className="flex gap-1 items-center">
                     <Input
-                      placeholder="Buscar..."
-                      className="pl-7 h-8 text-xs"
-                      value={filters.search}
-                      onChange={(e) => handleFiltersChange({ search: e.target.value })}
+                      type="number"
+                      placeholder="Mín"
+                      className="h-8 text-sm"
+                      value={filters.minPrice || ""}
+                      onChange={(e) => handleFiltersChange({ minPrice: Number(e.target.value) || 0 })}
+                    />
+                    <span className="text-muted-foreground text-xs">-</span>
+                    <Input
+                      type="number"
+                      placeholder="Máx"
+                      className="h-8 text-sm"
+                      value={filters.maxPrice === 100000 ? "" : filters.maxPrice}
+                      onChange={(e) => handleFiltersChange({ maxPrice: Number(e.target.value) || 100000 })}
                     />
                   </div>
                 </div>
 
-                {/* Categorias verticais */}
-                <button
-                  onClick={() => handleFiltersChange({ categoryId: "" })}
-                  className={`w-full text-left text-xs md:text-sm px-2 py-2 rounded-lg transition-colors font-medium ${!filters.categoryId ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
-                >
-                  🏠 <span className="hidden sm:inline">Todas</span>
-                </button>
-                {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => handleFiltersChange({ categoryId: cat.id })}
-                    className={`w-full text-left text-xs md:text-sm px-2 py-2 rounded-lg transition-colors ${filters.categoryId === cat.id ? "bg-primary text-primary-foreground font-medium" : "hover:bg-muted"}`}
-                  >
-                    <span className="line-clamp-1">{cat.name}</span>
-                  </button>
-                ))}
-
-                {/* Ordenar - só desktop */}
-                <div className="hidden md:block pt-2">
-                  <label className="text-xs font-medium text-muted-foreground uppercase block mb-1">Ordenar</label>
+                {/* Ordenar */}
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground uppercase">Ordenar</label>
                   <Select
                     value={`${filters.sortBy}-${filters.sortOrder}`}
                     onValueChange={(value) => {
@@ -464,23 +481,71 @@ export default function HomeClient() {
                       handleFiltersChange({ sortBy, sortOrder });
                     }}
                   >
-                    <SelectTrigger className="h-8 text-xs">
+                    <SelectTrigger className="h-9 text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="createdAt-desc">Mais recentes</SelectItem>
+                      <SelectItem value="createdAt-asc">Mais antigos</SelectItem>
                       <SelectItem value="price-asc">Menor preço</SelectItem>
                       <SelectItem value="price-desc">Maior preço</SelectItem>
                       <SelectItem value="views-desc">Mais vistos</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Limpar filtros */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs"
+                  onClick={() => handleFiltersChange({ search: "", minPrice: 0, maxPrice: 100000, categoryId: "", sortBy: "createdAt", sortOrder: "desc" })}
+                >
+                  Limpar filtros
+                </Button>
               </div>
             </aside>
 
             {/* Conteúdo principal */}
             <div className="flex-1 min-w-0">
-
+              {/* Barra de pesquisa mobile */}
+              <div className="md:hidden mb-3 flex gap-2">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar produtos..."
+                    className="pl-9"
+                    value={filters.search}
+                    onChange={(e) => handleFiltersChange({ search: e.target.value })}
+                  />
+                </div>
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="icon">
+                      <SlidersHorizontal className="h-4 w-4" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-[280px]">
+                    <SheetHeader>
+                      <SheetTitle>Filtros</SheetTitle>
+                      <SheetDescription>Refinar pesquisa</SheetDescription>
+                    </SheetHeader>
+                    <div className="mt-4 space-y-4">
+                      <div className="space-y-1">
+                        {categories.map((cat) => (
+                          <button
+                            key={cat.id}
+                            onClick={() => handleFiltersChange({ categoryId: cat.id })}
+                            className={`w-full text-left text-sm px-3 py-2 rounded hover:bg-muted ${filters.categoryId === cat.id ? "bg-primary/10 text-primary font-medium" : ""}`}
+                          >
+                            {cat.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </div>
 
               {/* Contagem */}
               <p className="text-xs text-muted-foreground mb-3">
