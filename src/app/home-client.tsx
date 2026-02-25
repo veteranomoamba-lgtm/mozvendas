@@ -721,24 +721,18 @@ function ProductDetailView({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Image Gallery */}
-        <div className="space-y-4">
-          <div className="aspect-square rounded-lg overflow-hidden bg-muted">
-            <img
-              src={images[currentImage]}
-              alt={product.title}
-              className="w-full h-full object-cover"
-            />
-          </div>
+        <div className="flex gap-3">
+          {/* Miniaturas verticais à esquerda */}
           {images.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto pb-2">
+            <div className="flex flex-col gap-2 overflow-y-auto max-h-[420px] pr-1">
               {images.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentImage(index)}
-                  className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
+                  className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
                     currentImage === index
                       ? "border-primary"
-                      : "border-transparent"
+                      : "border-transparent hover:border-muted-foreground"
                   }`}
                 >
                   <img
@@ -750,6 +744,14 @@ function ProductDetailView({
               ))}
             </div>
           )}
+          {/* Imagem principal */}
+          <div className="flex-1 aspect-square rounded-lg overflow-hidden bg-muted">
+            <img
+              src={images[currentImage]}
+              alt={product.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
         </div>
 
         {/* Product Info */}
