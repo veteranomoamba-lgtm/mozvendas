@@ -311,7 +311,7 @@ export default function HomeClient() {
         );
 
       case "new-product":
-        return isSeller ? (
+        return (
           <div className="max-w-2xl mx-auto">
             <Button variant="ghost" onClick={() => setView("home")} className="mb-4">
               <ChevronLeft className="h-4 w-4 mr-2" />
@@ -321,15 +321,6 @@ export default function HomeClient() {
               categories={categories}
               onSubmit={handleCreateProduct}
             />
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <Shield className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold mb-2">{ptBR.auth.sellerAccessRequired}</h2>
-            <p className="text-muted-foreground mb-4">
-              {ptBR.auth.sellerAccessDescription}
-            </p>
-            <Button onClick={() => setView("home")}>{ptBR.nav.goBack}</Button>
           </div>
         );
 

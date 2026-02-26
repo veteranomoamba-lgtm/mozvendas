@@ -31,6 +31,7 @@ const PROVINCES = ["Maputo Cidade","Maputo Província","Gaza","Inhambane","Sofal
 const productSchema = z.object({
   title: z.string().min(3, "O título deve ter pelo menos 3 caracteres").max(200),
   description: z.string().min(10, "A descrição deve ter pelo menos 10 caracteres").max(5000),
+  phone: z.string().min(9, "Introduza 9 dígitos").max(9, "Máximo 9 dígitos").regex(/^[0-9]+$/, "Apenas números"),
   price: z.number().positive("O preço deve ser positivo").max(100_000_000),
   categoryId: z.string().optional(),
   province: z.string().optional(),
@@ -75,6 +76,7 @@ export function ProductForm({
     defaultValues: {
       title: initialData?.title || "",
       description: initialData?.description || "",
+      phone: "",
       price: initialData?.price || 0,
       categoryId: initialData?.categoryId || "",
       province: initialData?.province || "",
@@ -172,6 +174,29 @@ export function ProductForm({
             {form.formState.errors.description && (
               <p className="text-sm text-destructive">
                 {form.formState.errors.description.message}
+              </p>
+            )}
+          </div>
+
+          {/* Phone */}
+          <div className="space-y-2">
+            <Label htmlFor="phone">Contacto do Vendedor *</Label>
+            <div className="flex">
+              <div className="flex items-center px-3 bg-muted border border-r-0 rounded-l-md text-sm font-medium gap-1">
+                🇲🇿 +258
+              </div>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="8X XXX XXXX"
+                className="rounded-l-none"
+                maxLength={9}
+                {...form.register("phone")}
+              />
+            </div>
+            {form.formState.errors.phone && (
+              <p className="text-sm text-destructive">
+                {form.formState.errors.phone.message}
               </p>
             )}
           </div>

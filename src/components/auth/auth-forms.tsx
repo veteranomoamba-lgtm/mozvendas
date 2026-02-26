@@ -38,6 +38,7 @@ const registerSchema = z
   .object({
     name: z.string().min(2, ptBR.auth.nameMinLength),
     email: z.string().email(ptBR.auth.invalidEmail),
+    phone: z.string().min(9, "Introduza 9 dígitos").max(9, "Máximo 9 dígitos").regex(/^[0-9]+$/, "Apenas números"),
     password: z
       .string()
       .min(8, "A senha deve ter pelo menos 8 caracteres")
@@ -78,6 +79,7 @@ export function AuthForms({ defaultTab = "login", onSuccess }: AuthFormsProps) {
     defaultValues: {
       name: "",
       email: "",
+      phone: "",
       password: "",
       confirmPassword: "",
       role: "BUYER",
@@ -126,6 +128,7 @@ export function AuthForms({ defaultTab = "login", onSuccess }: AuthFormsProps) {
         body: JSON.stringify({
           name: data.name,
           email: data.email,
+          phone: "+258" + data.phone,
           password: data.password,
           role: data.role,
         }),
@@ -334,6 +337,28 @@ export function AuthForms({ defaultTab = "login", onSuccess }: AuthFormsProps) {
                 {registerForm.formState.errors.email && (
                   <p className="text-sm text-destructive">
                     {registerForm.formState.errors.email.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="register-phone">Número de Telefone *</Label>
+                <div className="flex">
+                  <div className="flex items-center px-3 bg-muted border border-r-0 rounded-l-md text-sm font-medium gap-1">
+                    🇲🇿 +258
+                  </div>
+                  <Input
+                    id="register-phone"
+                    type="tel"
+                    placeholder="8X XXX XXXX"
+                    className="rounded-l-none"
+                    maxLength={9}
+                    {...registerForm.register("phone")}
+                  />
+                </div>
+                {registerForm.formState.errors.phone && (
+                  <p className="text-sm text-destructive">
+                    {registerForm.formState.errors.phone.message}
                   </p>
                 )}
               </div>
