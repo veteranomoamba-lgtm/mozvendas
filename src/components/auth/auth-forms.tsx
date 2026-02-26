@@ -61,7 +61,6 @@ interface AuthFormsProps {
 }
 
 export function AuthForms({ defaultTab = "login", onSuccess }: AuthFormsProps) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<string>(
     searchParams.get("auth") || defaultTab
@@ -110,7 +109,7 @@ export function AuthForms({ defaultTab = "login", onSuccess }: AuthFormsProps) {
       } else {
         toast.success(ptBR.auth.welcomeBack);
         onSuccess?.();
-        router.refresh();
+        window.location.href = "/";
       }
     } catch {
       toast.error(ptBR.auth.somethingWentWrong);
@@ -154,7 +153,6 @@ export function AuthForms({ defaultTab = "login", onSuccess }: AuthFormsProps) {
       } else {
         toast.success(ptBR.auth.accountCreated);
         onSuccess?.();
-        router.refresh();
       }
     } catch {
       toast.error(ptBR.auth.somethingWentWrong);

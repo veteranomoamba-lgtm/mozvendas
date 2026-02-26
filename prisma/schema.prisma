@@ -61,6 +61,7 @@ model Product {
   sellerId    String    @db.ObjectId
   seller      User      @relation(fields: [sellerId], references: [id])
   province    String?
+  phone       String?
   isActive    Boolean   @default(true)
   views       Int       @default(0)
   createdAt   DateTime  @default(now())

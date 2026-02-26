@@ -8,6 +8,7 @@ const VALID_ORDER = ["asc", "desc"];
 const productSchema = z.object({
   title: z.string().min(3).max(200).trim(),
   description: z.string().min(10).max(5000).trim(),
+  phone: z.string().optional(),
   price: z.number().positive().max(100_000_000),
   images: z.array(z.string().url()).min(1).max(10),
   categoryId: z.string().optional(),
@@ -59,13 +60,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { requireSeller } = await import("@/lib/auth/utils");
-    const user = await requireSeller();
+    const { requireAuth } = await import("@/lib/auth/utils");
+    const user = await requireAuth();
     const body = await request.json();
     const data = productSchema.parse(body);
 
     const product = await db.product.create({
-      data: { title: data.title, description: data.description, price: data.price, images: JSON.stringify(data.images), categoryId: data.categoryId, province: data.province, sellerId: user.id },
+      data: { title: data.title, description: data.description, phone: data.phone, price: data.price, images: JSON.stringify(data.images), categoryId: data.categoryId, province: data.province, sellerId: user.id },
       include: { seller: { select: { id: true, name: true, avatar: true } }, category: true },
     });
     return NextResponse.json(product, { status: 201 });
