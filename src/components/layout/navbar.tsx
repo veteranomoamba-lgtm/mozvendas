@@ -31,7 +31,11 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import ptBR from "@/lib/translations/pt-BR";
 import { useCartStore } from "@/lib/store/cart";
 
-export function Navbar() {
+interface NavbarProps {
+  onAuthClick?: (tab?: "login" | "register") => void;
+}
+
+export function Navbar({ onAuthClick }: NavbarProps = {}) {
   const { data: session } = useSession();
   const { theme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
@@ -207,11 +211,11 @@ export function Navbar() {
             </>
           ) : (
             <div className="flex items-center gap-2">
-              <Button variant="ghost" asChild>
-                <Link href="/?auth=login">{ptBR.nav.signIn}</Link>
+              <Button variant="ghost" onClick={() => onAuthClick?.("login")}>
+                {ptBR.nav.signIn}
               </Button>
-              <Button asChild className="hidden sm:flex">
-                <Link href="/?auth=register">{ptBR.nav.signUp}</Link>
+              <Button className="hidden sm:flex" onClick={() => onAuthClick?.("register")}>
+                {ptBR.nav.signUp}
               </Button>
             </div>
           )}
@@ -296,15 +300,11 @@ export function Navbar() {
                   </>
                 ) : (
                   <div className="flex flex-col gap-2 mt-4">
-                    <Button variant="outline" asChild>
-                      <Link href="/?auth=login" onClick={() => setIsOpen(false)}>
-                        {ptBR.nav.signIn}
-                      </Link>
+                    <Button variant="outline" onClick={() => { setIsOpen(false); onAuthClick?.("login"); }}>
+                      {ptBR.nav.signIn}
                     </Button>
-                    <Button asChild>
-                      <Link href="/?auth=register" onClick={() => setIsOpen(false)}>
-                        {ptBR.nav.signUp}
-                      </Link>
+                    <Button onClick={() => { setIsOpen(false); onAuthClick?.("register"); }}>
+                      {ptBR.nav.signUp}
                     </Button>
                   </div>
                 )}
