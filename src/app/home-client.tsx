@@ -1,7 +1,7 @@
 "use client";
 
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
@@ -57,7 +57,9 @@ import {
   ShoppingCart,
   Search,
   SlidersHorizontal,
-, Star, Camera } from "lucide-react";
+  Star,
+  Camera,
+} from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { ptBR as dateLocale } from "date-fns/locale";
 import ptBR from "@/lib/translations/pt-BR";
@@ -575,7 +577,7 @@ export default function HomeClient() {
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {products.map((product) => (
                     <div key={product.id} onClick={() => handleViewProduct(product.id)}>
-                      <ProductCard product={product} onClick={() => handleProductClick(product)} />
+                      <ProductCard product={product} onClick={() => handleViewProduct(product.id)} />
                     </div>
                   ))}
                 </div>
@@ -1225,7 +1227,7 @@ function MyProductsView({ onEdit }: { onEdit: (id: string) => void }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((product) => (
             <div key={product.id} className="relative group">
-              <ProductCard product={product} onClick={() => handleProductClick(product)} />
+              <ProductCard product={product} onClick={() => handleViewProduct(product.id)} />
               <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button size="sm" variant="secondary" onClick={() => onEdit(product.id)}>
                   <Edit className="h-4 w-4" />
