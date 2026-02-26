@@ -57,7 +57,7 @@ import {
   ShoppingCart,
   Search,
   SlidersHorizontal,
-} from "lucide-react";
+, Star, Camera } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { ptBR as dateLocale } from "date-fns/locale";
 import ptBR from "@/lib/translations/pt-BR";
@@ -115,6 +115,7 @@ export default function HomeClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authDefaultTab, setAuthDefaultTab] = useState<"login" | "register">("login");
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const [showMessageSheet, setShowMessageSheet] = useState(false);
   const [messageReceiverId, setMessageReceiverId] = useState<string | null>(null);
   const [prefilledMessage, setPrefilledMessage] = useState<string>("");
@@ -142,6 +143,21 @@ export default function HomeClient() {
       setShowAuthModal(true);
     }
   }, [searchParams, session]);
+
+  // Fetch unread messages count
+  useEffect(() => {
+    if (session?.user) {
+      const fetchUnread = () => {
+        fetch("/api/messages/unread")
+          .then((r) => r.json())
+          .then((d) => setUnreadMessages(d.count || 0))
+          .catch(() => {});
+      };
+      fetchUnread();
+      const interval = setInterval(fetchUnread, 15000); // check every 15s
+      return () => clearInterval(interval);
+    }
+  }, [session]);
 
   // Fetch categories and seed on mount
   useEffect(() => {
@@ -601,7 +617,16 @@ export default function HomeClient() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar onAuthClick={(tab) => { setAuthDefaultTab(tab || "login"); setShowAuthModal(true); }} />
+      <Navbar 
+        onAuthClick={(tab) => { setAuthDefaultTab(tab || "login"); setShowAuthModal(true); }} 
+        unreadMessages={unreadMessages} 
+        onMessagesClick={() => setView("messages")} 
+        onHomeClick={() => setView("home")}
+        onNewProductClick={() => {
+          if (!session?.user) { setAuthDefaultTab("login"); setShowAuthModal(true); return; }
+          setView("new-product");
+        }}
+      />
 
       <main className="flex-1 container mx-auto px-4 py-6">
         {/* View Navigation for logged in users */}
@@ -631,26 +656,22 @@ export default function HomeClient() {
               <MessageSquare className="h-4 w-4 mr-2" />
               {ptBR.nav.messages}
             </Button>
-            {isSeller && (
-              <>
-                <Button
-                  variant={view === "my-products" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setView("my-products")}
-                >
-                  <Package className="h-4 w-4 mr-2" />
-                  {ptBR.nav.myProducts}
-                </Button>
-                <Button
-                  variant={view === "new-product" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setView("new-product")}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {ptBR.nav.addProduct}
-                </Button>
-              </>
-            )}
+            <Button
+              variant={view === "my-products" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setView("my-products")}
+            >
+              <Package className="h-4 w-4 mr-2" />
+              {ptBR.nav.myProducts}
+            </Button>
+            <Button
+              variant={view === "new-product" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setView("new-product")}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {ptBR.nav.addProduct}
+            </Button>
             {isAdmin && (
               <Button
                 variant={view === "admin" ? "default" : "outline"}
@@ -852,35 +873,7 @@ function ProductDetailView({
           <Separator />
 
           {/* Seller Info */}
-          <div>
-            <h2 className="font-semibold mb-4">{ptBR.productDetail.sellerInfo}</h2>
-            <div className="flex items-center gap-4">
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={product.seller.avatar || ""} />
-                <AvatarFallback>
-                  {product.seller.name?.charAt(0).toUpperCase() || "U"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <p className="font-medium">{product.seller.name}</p>
-                <p className="text-sm text-muted-foreground">
-                  {ptBR.productDetail.memberSince}{" "}
-                  {product.seller.createdAt
-                    ? format(new Date(product.seller.createdAt), "MMM yyyy", { locale: dateLocale })
-                    : "N/A"}
-                </p>
-              </div>
-              <Badge variant="outline">
-                {product.seller.role === "ADMIN" ? ptBR.roles.admin : 
-                 product.seller.role === "SELLER" ? ptBR.roles.seller : ptBR.roles.buyer}
-              </Badge>
-            </div>
-            {product.seller.bio && (
-              <p className="text-sm text-muted-foreground mt-3">
-                {product.seller.bio}
-              </p>
-            )}
-          </div>
+          <SellerInfoWithRating product={product} isOwner={isOwner} />
 
           {/* Actions */}
           <div className="flex flex-wrap gap-2">
@@ -942,14 +935,158 @@ function ProductDetailView({
   );
 }
 
+
+// Seller Info with Rating Component
+function SellerInfoWithRating({ product, isOwner }: { product: Product; isOwner: boolean }) {
+  const { data: session } = useSession();
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [averageRating, setAverageRating] = useState<number | null>(null);
+  const [totalRatings, setTotalRatings] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [alreadyRated, setAlreadyRated] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/ratings?sellerId=${product.seller.id}`)
+      .then((r) => r.json())
+      .then((d) => {
+        setAverageRating(d.average || null);
+        setTotalRatings(d.total || 0);
+        if (session?.user && d.userRating) {
+          setRating(d.userRating);
+          setAlreadyRated(true);
+        }
+      })
+      .catch(() => {});
+  }, [product.seller.id, session]);
+
+  const handleRate = async (stars: number) => {
+    if (!session?.user) { toast.error("Faz login para classificar!"); return; }
+    if (isOwner) { toast.error("Não podes classificar o teu próprio produto!"); return; }
+    setSubmitting(true);
+    try {
+      await fetch("/api/ratings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sellerId: product.seller.id, rating: stars }),
+      });
+      setRating(stars);
+      setAlreadyRated(true);
+      toast.success("Classificação guardada! ⭐");
+      // Refresh average
+      fetch(`/api/ratings?sellerId=${product.seller.id}`)
+        .then((r) => r.json())
+        .then((d) => { setAverageRating(d.average); setTotalRatings(d.total); });
+    } catch {
+      toast.error("Falha ao guardar classificação");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div>
+      <h2 className="font-semibold mb-4">{ptBR.productDetail.sellerInfo}</h2>
+      <div className="flex items-center gap-4">
+        <Avatar className="h-12 w-12">
+          <AvatarImage src={product.seller.avatar || ""} />
+          <AvatarFallback>{product.seller.name?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
+        </Avatar>
+        <div className="flex-1">
+          <p className="font-medium">{product.seller.name}</p>
+          <p className="text-sm text-muted-foreground">
+            {ptBR.productDetail.memberSince}{" "}
+            {product.seller.createdAt ? format(new Date(product.seller.createdAt), "MMM yyyy", { locale: dateLocale }) : "N/A"}
+          </p>
+          {/* Média de estrelas */}
+          <div className="flex items-center gap-1 mt-1">
+            {[1,2,3,4,5].map((s) => (
+              <Star key={s} className={`h-3.5 w-3.5 ${(averageRating || 0) >= s ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"}`} />
+            ))}
+            {averageRating !== null && (
+              <span className="text-xs text-muted-foreground ml-1">{averageRating.toFixed(1)} ({totalRatings})</span>
+            )}
+          </div>
+        </div>
+        <Badge variant="outline">
+          {product.seller.role === "ADMIN" ? ptBR.roles.admin :
+           product.seller.role === "SELLER" ? ptBR.roles.seller : ptBR.roles.buyer}
+        </Badge>
+      </div>
+      {product.seller.bio && <p className="text-sm text-muted-foreground mt-3">{product.seller.bio}</p>}
+
+      {/* Classificação pelo comprador */}
+      {!isOwner && session?.user && (
+        <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+          <p className="text-sm font-medium mb-2">
+            {alreadyRated ? "A tua classificação:" : "Classifica este vendedor:"}
+          </p>
+          <div className="flex gap-1">
+            {[1,2,3,4,5].map((s) => (
+              <button
+                key={s}
+                disabled={submitting || alreadyRated}
+                onClick={() => handleRate(s)}
+                onMouseEnter={() => !alreadyRated && setHoverRating(s)}
+                onMouseLeave={() => setHoverRating(0)}
+                className="disabled:cursor-default"
+              >
+                <Star className={`h-7 w-7 transition-colors ${
+                  (hoverRating || rating) >= s
+                    ? "fill-yellow-400 text-yellow-400"
+                    : "text-muted-foreground hover:text-yellow-300"
+                }`} />
+              </button>
+            ))}
+          </div>
+          {alreadyRated && <p className="text-xs text-muted-foreground mt-1">Já classificaste este vendedor.</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Profile View Component
 function ProfileView() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const [name, setName] = useState(session?.user?.name || "");
   const [bio, setBio] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const hasAvatar = !!session?.user?.avatar;
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append("files", file);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      const url = data.urls?.[0];
+      if (!url) throw new Error();
+      await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatar: url }),
+      });
+      toast.success("Foto de perfil actualizada!");
+      window.location.reload();
+    } catch {
+      toast.error("Falha ao carregar foto");
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
 
   const handleUpdate = async () => {
+    if (!hasAvatar) {
+      toast.error("Adiciona uma foto de perfil primeiro!");
+      avatarInputRef.current?.click();
+      return;
+    }
     setIsLoading(true);
     try {
       const response = await fetch("/api/profile", {
@@ -970,14 +1107,29 @@ function ProfileView() {
     <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">{ptBR.profile.title}</h1>
 
+      {!hasAvatar && (
+        <div className="mb-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-sm text-yellow-600 dark:text-yellow-400">
+          ⚠️ Adiciona uma foto de perfil para maior segurança e confiança!
+        </div>
+      )}
+
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Avatar className="h-20 w-20">
-            <AvatarImage src={session?.user?.avatar || ""} />
-            <AvatarFallback className="text-2xl">
-              {session?.user?.name?.charAt(0).toUpperCase() || "U"}
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative">
+            <Avatar className="h-20 w-20">
+              <AvatarImage src={session?.user?.avatar || ""} />
+              <AvatarFallback className="text-2xl">
+                {session?.user?.name?.charAt(0).toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg hover:bg-primary/90"
+            >
+              {isUploadingAvatar ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
+            </button>
+            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+          </div>
           <div>
             <h2 className="font-semibold">{session?.user?.name}</h2>
             <p className="text-muted-foreground">{session?.user?.email}</p>
@@ -993,22 +1145,12 @@ function ProfileView() {
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">{ptBR.profile.displayName}</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="bio">{ptBR.profile.bio}</Label>
-            <Textarea
-              id="bio"
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder={ptBR.profile.bioPlaceholder}
-              rows={4}
-            />
+            <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder={ptBR.profile.bioPlaceholder} rows={4} />
           </div>
 
           <Button onClick={handleUpdate} disabled={isLoading}>

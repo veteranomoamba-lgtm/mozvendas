@@ -33,9 +33,13 @@ import { useCartStore } from "@/lib/store/cart";
 
 interface NavbarProps {
   onAuthClick?: (tab?: "login" | "register") => void;
+  unreadMessages?: number;
+  onMessagesClick?: () => void;
+  onHomeClick?: () => void;
+  onNewProductClick?: () => void;
 }
 
-export function Navbar({ onAuthClick }: NavbarProps = {}) {
+export function Navbar({ onAuthClick, unreadMessages = 0, onMessagesClick, onHomeClick, onNewProductClick }: NavbarProps = {}) {
   const { data: session } = useSession();
   const { theme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
@@ -58,10 +62,10 @@ export function Navbar({ onAuthClick }: NavbarProps = {}) {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 font-bold text-xl">
+        <button onClick={onHomeClick} className="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition-opacity">
           <Package className="h-6 w-6" />
           <span className="hidden sm:inline">{ptBR.appName}</span>
-        </Link>
+        </button>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
@@ -134,15 +138,11 @@ export function Navbar({ onAuthClick }: NavbarProps = {}) {
 
           {session ? (
             <>
-              {/* Add Product Button (Seller only) */}
-              {isSeller && (
-                <Button asChild size="sm" className="hidden sm:flex">
-                  <Link href="/products/new">
-                    <Plus className="h-4 w-4 mr-1" />
-                    {ptBR.nav.addProduct}
-                  </Link>
-                </Button>
-              )}
+              {/* Add Product Button - todos podem anunciar */}
+              <Button size="sm" className="hidden sm:flex" onClick={() => onNewProductClick?.()}>
+                <Plus className="h-4 w-4 mr-1" />
+                {ptBR.nav.addProduct}
+              </Button>
 
               {/* User Menu */}
               <DropdownMenu>
@@ -251,23 +251,21 @@ export function Navbar({ onAuthClick }: NavbarProps = {}) {
                       )}
                     </Link>
                     <Link
-                      href="/messages"
+                      href="#"
+                  onClick={(e) => { e.preventDefault(); onMessagesClick?.(); }}
                       onClick={() => setIsOpen(false)}
                       className="flex items-center gap-2 text-lg font-medium"
                     >
                       <MessageSquare className="h-5 w-5" />
                       {ptBR.nav.messages}
                     </Link>
-                    {isSeller && (
-                      <Link
-                        href="/products/new"
-                        onClick={() => setIsOpen(false)}
-                        className="flex items-center gap-2 text-lg font-medium"
-                      >
-                        <Plus className="h-5 w-5" />
-                        {ptBR.nav.addProduct}
-                      </Link>
-                    )}
+                    <button
+                      onClick={() => { setIsOpen(false); onNewProductClick?.(); }}
+                      className="flex items-center gap-2 text-lg font-medium"
+                    >
+                      <Plus className="h-5 w-5" />
+                      {ptBR.nav.addProduct}
+                    </button>
                     {isAdmin && (
                       <Link
                         href="/admin"
