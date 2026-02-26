@@ -114,6 +114,7 @@ export default function HomeClient() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authDefaultTab, setAuthDefaultTab] = useState<"login" | "register">("login");
   const [showMessageSheet, setShowMessageSheet] = useState(false);
   const [messageReceiverId, setMessageReceiverId] = useState<string | null>(null);
   const [prefilledMessage, setPrefilledMessage] = useState<string>("");
@@ -600,7 +601,7 @@ export default function HomeClient() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+      <Navbar onAuthClick={(tab) => { setAuthDefaultTab(tab || "login"); setShowAuthModal(true); }} />
 
       <main className="flex-1 container mx-auto px-4 py-6">
         {/* View Navigation for logged in users */}
@@ -672,9 +673,10 @@ export default function HomeClient() {
       <Dialog open={showAuthModal} onOpenChange={setShowAuthModal}>
         <DialogContent className="sm:max-w-[400px]">
           <AuthForms
+            defaultTab={authDefaultTab}
             onSuccess={() => {
               setShowAuthModal(false);
-              router.refresh();
+              window.location.href = "/";
             }}
           />
         </DialogContent>
