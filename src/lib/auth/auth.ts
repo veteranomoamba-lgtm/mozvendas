@@ -81,22 +81,41 @@ export const authOptions: NextAuthOptions = {
       }
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id; token.email = user.email; token.name = user.name;
         token.role = user.role; token.isBanned = user.isBanned; token.avatar = user.avatar;
+        token.lastChecked = Date.now();
+      }
+      // Verificar ban na BD a cada 60 segundos
+      const lastChecked = (token.lastChecked as number) || 0;
+      const shouldRefresh = Date.now() - lastChecked > 60 * 1000;
+      if (token.id && shouldRefresh) {
+        const dbUser = await db.user.findUnique({ where: { id: token.id as string } });
+        if (dbUser) {
+          token.role = dbUser.role;
+          token.isBanned = dbUser.isBanned;
+          token.avatar = dbUser.avatar;
+          token.name = dbUser.name;
+          token.lastChecked = Date.now();
+        }
       }
       if (token.email && !token.id) {
         const dbUser = await db.user.findUnique({ where: { email: token.email } });
         if (dbUser) {
           token.id = dbUser.id; token.role = dbUser.role;
           token.isBanned = dbUser.isBanned; token.avatar = dbUser.avatar; token.name = dbUser.name;
+          token.lastChecked = Date.now();
         }
       }
       return token;
     },
     async session({ session, token }) {
       if (token) {
+        // Se o utilizador está banido, retorna sessão inválida
+        if (token.isBanned) {
+          return { ...session, user: { ...session.user, isBanned: true } };
+        }
         session.user = {
           id: (token.id as string) || "",
           email: (token.email as string) || "",
