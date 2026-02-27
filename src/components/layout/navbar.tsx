@@ -250,15 +250,13 @@ export function Navbar({ onAuthClick, unreadMessages = 0, onMessagesClick, onHom
                         <Badge variant="destructive">{items.length}</Badge>
                       )}
                     </Link>
-                    <Link
-                      href="#"
-                  onClick={(e) => { e.preventDefault(); onMessagesClick?.(); }}
-                      onClick={() => setIsOpen(false)}
+                    <button
+                      onClick={() => { setIsOpen(false); onMessagesClick?.(); }}
                       className="flex items-center gap-2 text-lg font-medium"
                     >
                       <MessageSquare className="h-5 w-5" />
                       {ptBR.nav.messages}
-                    </Link>
+                    </button>
                     <button
                       onClick={() => { setIsOpen(false); onNewProductClick?.(); }}
                       className="flex items-center gap-2 text-lg font-medium"

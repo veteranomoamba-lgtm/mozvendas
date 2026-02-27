@@ -389,11 +389,17 @@ export default function HomeClient() {
         return <ProfileView />;
 
       case "my-products":
-        return <MyProductsView onEdit={(id) => {
-          setSelectedProductId(id);
-          fetchProduct(id);
-          setView("edit-product");
-        }} />;
+        return <MyProductsView 
+          onEdit={(id) => {
+            setSelectedProductId(id);
+            fetchProduct(id);
+            setView("edit-product");
+          }}
+          onView={(id) => {
+            fetchProduct(id);
+            setView("product");
+          }}
+        />;
 
       case "admin":
         return isAdmin ? (
@@ -577,7 +583,7 @@ export default function HomeClient() {
                 <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {products.map((product) => (
                     <div key={product.id} onClick={() => handleViewProduct(product.id)}>
-                      <ProductCard product={product} onClick={() => handleViewProduct(product.id)} />
+                      <ProductCard product={product} onClick={() => onView?.(product.id)} />
                     </div>
                   ))}
                 </div>
@@ -1166,7 +1172,7 @@ function ProfileView() {
 }
 
 // My Products View Component
-function MyProductsView({ onEdit }: { onEdit: (id: string) => void }) {
+function MyProductsView({ onEdit, onView }: { onEdit: (id: string) => void; onView?: (id: string) => void }) {
   const { data: session } = useSession();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -1227,7 +1233,7 @@ function MyProductsView({ onEdit }: { onEdit: (id: string) => void }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((product) => (
             <div key={product.id} className="relative group">
-              <ProductCard product={product} onClick={() => handleViewProduct(product.id)} />
+              <ProductCard product={product} onClick={() => onView?.(product.id)} />
               <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button size="sm" variant="secondary" onClick={() => onEdit(product.id)}>
                   <Edit className="h-4 w-4" />
