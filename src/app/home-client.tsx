@@ -2,7 +2,7 @@
 
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
@@ -99,6 +99,14 @@ type ViewType = "home" | "product" | "new-product" | "edit-product" | "messages"
 
 export default function HomeClient() {
   const { data: session, status } = useSession();
+
+  // Se o utilizador está banido, fazer logout automático
+  useEffect(() => {
+    if (session?.user?.isBanned) {
+      toast.error("A tua conta foi suspensa. Contacta o suporte.");
+      signOut({ callbackUrl: "/" });
+    }
+  }, [session?.user?.isBanned]);
   const [searchParams, setSearchParams] = useState(() => 
     typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams()
   );
@@ -1061,45 +1069,62 @@ function SellerInfoWithRating({ product, isOwner }: { product: Product; isOwner:
 
 // Profile View Component
 function ProfileView() {
-  const { data: session, update } = useSession();
+  const { data: session } = useSession();
   const [name, setName] = useState(session?.user?.name || "");
   const [bio, setBio] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const avatarInputRef = useRef<HTMLInputElement>(null);
-  const hasAvatar = !!session?.user?.avatar;
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsUploadingAvatar(true);
-    try {
-      const formData = new FormData();
-      formData.append("files", file);
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      const url = data.urls?.[0];
-      if (!url) throw new Error();
-      await fetch("/api/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ avatar: url }),
-      });
-      toast.success("Foto de perfil actualizada!");
-      window.location.reload();
-    } catch {
-      toast.error("Falha ao carregar foto");
-    } finally {
-      setIsUploadingAvatar(false);
-    }
+  const openFilePicker = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.style.display = "none";
+    document.body.appendChild(input);
+    input.onchange = async (e: Event) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      document.body.removeChild(input);
+      if (!file) return;
+      // Mostrar preview local imediatamente
+      const reader = new FileReader();
+      reader.onload = (ev) => setAvatarPreview(ev.target?.result as string);
+      reader.readAsDataURL(file);
+      // Fazer upload
+      setIsUploadingAvatar(true);
+      try {
+        const formData = new FormData();
+        formData.append("files", file);
+        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        if (!res.ok) {
+          const err = await res.json();
+          toast.error(err.error || "Falha no upload");
+          setAvatarPreview(null);
+          return;
+        }
+        const data = await res.json();
+        const url = data.urls?.[0];
+        if (!url) { toast.error("Falha ao obter URL da foto"); setAvatarPreview(null); return; }
+        const profileRes = await fetch("/api/profile", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ avatar: url }),
+        });
+        if (!profileRes.ok) { toast.error("Falha ao guardar foto"); return; }
+        toast.success("✅ Foto de perfil actualizada!");
+        setTimeout(() => window.location.reload(), 1500);
+      } catch (err) {
+        console.error(err);
+        toast.error("Erro inesperado no upload");
+        setAvatarPreview(null);
+      } finally {
+        setIsUploadingAvatar(false);
+      }
+    };
+    input.click();
   };
 
   const handleUpdate = async () => {
-    if (!hasAvatar) {
-      toast.error("Adiciona uma foto de perfil primeiro!");
-      avatarInputRef.current?.click();
-      return;
-    }
     setIsLoading(true);
     try {
       const response = await fetch("/api/profile", {
@@ -1116,11 +1141,13 @@ function ProfileView() {
     }
   };
 
+  const currentAvatar = avatarPreview || session?.user?.avatar || "";
+
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">{ptBR.profile.title}</h1>
 
-      {!hasAvatar && (
+      {!session?.user?.avatar && !avatarPreview && (
         <div className="mb-4 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-sm text-yellow-600 dark:text-yellow-400">
           ⚠️ Adiciona uma foto de perfil para maior segurança e confiança!
         </div>
@@ -1128,42 +1155,48 @@ function ProfileView() {
 
       <div className="space-y-6">
         {/* Foto de Perfil */}
-        <div className="flex flex-col items-center gap-3">
-          <div className="relative">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src={session?.user?.avatar || ""} />
+        <div className="flex flex-col items-center gap-4">
+          {/* Avatar clicável */}
+          <div 
+            onClick={openFilePicker}
+            className="relative cursor-pointer group"
+          >
+            <Avatar className="h-28 w-28">
+              <AvatarImage src={currentAvatar} />
               <AvatarFallback className="text-3xl">
                 {session?.user?.name?.charAt(0).toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
-            {isUploadingAvatar && (
-              <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
-                <Loader2 className="h-6 w-6 text-white animate-spin" />
-              </div>
-            )}
+            {/* Overlay ao hover */}
+            <div className="absolute inset-0 bg-black/50 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              {isUploadingAvatar 
+                ? <Loader2 className="h-6 w-6 text-white animate-spin" />
+                : <Camera className="h-6 w-6 text-white" />
+              }
+              <span className="text-white text-xs mt-1">
+                {isUploadingAvatar ? "A carregar..." : "Alterar"}
+              </span>
+            </div>
           </div>
-          <input 
-            ref={avatarInputRef} 
-            type="file" 
-            accept="image/*" 
-            className="hidden" 
-            onChange={handleAvatarUpload} 
-          />
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => avatarInputRef.current?.click()}
+
+          {/* Botão grande e visível */}
+          <button
+            type="button"
+            onClick={openFilePicker}
             disabled={isUploadingAvatar}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-full font-medium text-sm hover:bg-primary/90 disabled:opacity-50 shadow-md active:scale-95 transition-all"
           >
-            <Camera className="h-4 w-4" />
-            {isUploadingAvatar ? "A carregar..." : hasAvatar ? "Alterar foto" : "Adicionar foto 📸"}
-          </Button>
+            {isUploadingAvatar 
+              ? <><Loader2 className="h-4 w-4 animate-spin" /> A carregar foto...</>
+              : <><Camera className="h-4 w-4" /> {currentAvatar ? "Alterar foto" : "Adicionar foto 📸"}</>
+            }
+          </button>
+
           <div className="text-center">
-            <h2 className="font-semibold">{session?.user?.name}</h2>
+            <h2 className="font-semibold text-lg">{session?.user?.name}</h2>
             <p className="text-sm text-muted-foreground">{session?.user?.email}</p>
             <Badge variant="outline" className="mt-1">
-              {session?.user?.role === "ADMIN" ? ptBR.roles.admin : 
+              {session?.user?.role === "ADMIN" ? ptBR.roles.admin :
                session?.user?.role === "SELLER" ? ptBR.roles.seller : ptBR.roles.buyer}
             </Badge>
           </div>
@@ -1173,19 +1206,34 @@ function ProfileView() {
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">{ptBR.profile.displayName}</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+            <Label htmlFor="profile-name">{ptBR.profile.displayName}</Label>
+            <Input
+              id="profile-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="bio">{ptBR.profile.bio}</Label>
-            <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder={ptBR.profile.bioPlaceholder} rows={4} />
+            <Label htmlFor="profile-bio">{ptBR.profile.bio}</Label>
+            <Textarea
+              id="profile-bio"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder={ptBR.profile.bioPlaceholder}
+              rows={4}
+            />
           </div>
 
-          <Button onClick={handleUpdate} disabled={isLoading}>
-            {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          <button
+            type="button"
+            onClick={handleUpdate}
+            disabled={isLoading}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50"
+          >
+            {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
             {ptBR.profile.saveChanges}
-          </Button>
+          </button>
         </div>
       </div>
     </div>
