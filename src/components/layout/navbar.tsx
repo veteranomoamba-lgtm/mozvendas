@@ -64,7 +64,13 @@ export function Navbar({ onAuthClick, unreadMessages = 0, onMessagesClick, onHom
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <button onClick={onHomeClick} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <Image src="/logo.png" alt="MozVendas" width={40} height={40} className="object-contain" />
+          <Image
+            src="/logo.png"
+            alt="MozVendas"
+            width={40}
+            height={40}
+            className="object-contain dark:invert"
+          />
           <span className="hidden sm:inline font-bold text-xl">{ptBR.appName}</span>
         </button>
 
