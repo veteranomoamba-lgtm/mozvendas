@@ -45,9 +45,9 @@ export function Navbar({ onAuthClick, unreadMessages = 0, onMessagesClick, onHom
   const { theme, setTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const { items, setItems } = useCartStore();
+  const [unreadCount, setUnreadCount] = useState(unreadMessages);
 
   const isAdmin = session?.user?.role === "ADMIN";
-  const isSeller = session?.user?.role === "SELLER" || isAdmin;
 
   // Fetch cart items on mount
   useEffect(() => {
@@ -58,6 +58,22 @@ export function Navbar({ onAuthClick, unreadMessages = 0, onMessagesClick, onHom
         .catch(() => {});
     }
   }, [session, setItems]);
+
+  // Fetch unread messages count
+  useEffect(() => {
+    if (session?.user) {
+      const fetchUnread = () => {
+        fetch("/api/messages/unread")
+          .then((res) => res.json())
+          .then((data) => setUnreadCount(data.count || 0))
+          .catch(() => {});
+      };
+      fetchUnread();
+      // Actualiza a cada 30 segundos
+      const interval = setInterval(fetchUnread, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [session]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -84,6 +100,7 @@ export function Navbar({ onAuthClick, unreadMessages = 0, onMessagesClick, onHom
           </Link>
           {session && (
             <>
+              {/* Carrinho com badge */}
               <Link
                 href="/cart"
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 relative"
@@ -96,13 +113,21 @@ export function Navbar({ onAuthClick, unreadMessages = 0, onMessagesClick, onHom
                   </Badge>
                 )}
               </Link>
+
+              {/* Mensagens com badge */}
               <Link
                 href="/messages"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1 relative"
               >
                 <MessageSquare className="h-4 w-4" />
                 {ptBR.nav.messages}
+                {unreadCount > 0 && (
+                  <Badge variant="destructive" className="absolute -top-2 -right-3 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </Badge>
+                )}
               </Link>
+
               {isAdmin && (
                 <Link
                   href="/admin"
@@ -143,9 +168,22 @@ export function Navbar({ onAuthClick, unreadMessages = 0, onMessagesClick, onHom
             </Link>
           )}
 
+          {/* Messages Button (Mobile) */}
+          {session && (
+            <Link href="/messages" className="md:hidden relative">
+              <Button variant="ghost" size="icon">
+                <MessageSquare className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </Badge>
+                )}
+              </Button>
+            </Link>
+          )}
+
           {session ? (
             <>
-              {/* Add Product Button - todos podem anunciar */}
               <Button size="sm" className="hidden sm:flex" onClick={() => onNewProductClick?.()}>
                 <Plus className="h-4 w-4 mr-1" />
                 {ptBR.nav.addProduct}
@@ -173,7 +211,7 @@ export function Navbar({ onAuthClick, unreadMessages = 0, onMessagesClick, onHom
                         {session.user?.email}
                       </p>
                       <Badge variant="outline" className="w-fit mt-1 text-xs">
-                        {session.user?.role === "ADMIN" ? ptBR.roles.admin : 
+                        {session.user?.role === "ADMIN" ? ptBR.roles.admin :
                          session.user?.role === "SELLER" ? ptBR.roles.seller : ptBR.roles.buyer}
                       </Badge>
                     </div>
@@ -206,6 +244,11 @@ export function Navbar({ onAuthClick, unreadMessages = 0, onMessagesClick, onHom
                     <Link href="/messages">
                       <MessageSquare className="mr-2 h-4 w-4" />
                       {ptBR.nav.messages}
+                      {unreadCount > 0 && (
+                        <Badge variant="destructive" className="ml-auto">
+                          {unreadCount}
+                        </Badge>
+                      )}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -257,13 +300,17 @@ export function Navbar({ onAuthClick, unreadMessages = 0, onMessagesClick, onHom
                         <Badge variant="destructive">{items.length}</Badge>
                       )}
                     </Link>
-                    <button
-                      onClick={() => { setIsOpen(false); onMessagesClick?.(); }}
+                    <Link
+                      href="/messages"
+                      onClick={() => setIsOpen(false)}
                       className="flex items-center gap-2 text-lg font-medium"
                     >
                       <MessageSquare className="h-5 w-5" />
                       {ptBR.nav.messages}
-                    </button>
+                      {unreadCount > 0 && (
+                        <Badge variant="destructive">{unreadCount}</Badge>
+                      )}
+                    </Link>
                     <button
                       onClick={() => { setIsOpen(false); onNewProductClick?.(); }}
                       className="flex items-center gap-2 text-lg font-medium"
@@ -291,10 +338,7 @@ export function Navbar({ onAuthClick, unreadMessages = 0, onMessagesClick, onHom
                     </Link>
                     <Button
                       variant="outline"
-                      onClick={() => {
-                        signOut();
-                        setIsOpen(false);
-                      }}
+                      onClick={() => { signOut(); setIsOpen(false); }}
                       className="mt-4"
                     >
                       <LogOut className="h-4 w-4 mr-2" />
