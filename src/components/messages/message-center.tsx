@@ -62,6 +62,13 @@ export function MessageCenter({
     if (initialPartnerId) {
       setSelectedPartner(initialPartnerId);
       setShowMobileChat(true);
+      // Buscar info do parceiro directamente mesmo sem conversa anterior
+      fetch(`/api/users/${initialPartnerId}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data?.id) setSelectedPartnerInfo(data);
+        })
+        .catch(() => {});
     }
   }, [initialPartnerId]);
 
@@ -91,8 +98,9 @@ export function MessageCenter({
           else if (data.length > 0) {
             const msg = data[0];
             const partner = msg.senderId === session?.user?.id ? msg.receiver : msg.sender;
-            setSelectedPartnerInfo(partner);
+            if (partner) setSelectedPartnerInfo(partner);
           }
+          // Se não há mensagens, já foi buscado pelo useEffect acima
         }
       })
       .catch(() => {});
