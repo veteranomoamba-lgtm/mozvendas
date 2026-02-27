@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -62,9 +63,9 @@ export function Navbar({ onAuthClick, unreadMessages = 0, onMessagesClick, onHom
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
-        <button onClick={onHomeClick} className="flex items-center gap-2 font-bold text-xl hover:opacity-80 transition-opacity">
-          <Package className="h-6 w-6" />
-          <span className="hidden sm:inline">{ptBR.appName}</span>
+        <button onClick={onHomeClick} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <Image src="/logo.png" alt="MozVendas" width={40} height={40} className="object-contain" />
+          <span className="hidden sm:inline font-bold text-xl">{ptBR.appName}</span>
         </button>
 
         {/* Desktop Navigation */}
