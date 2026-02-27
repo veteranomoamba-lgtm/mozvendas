@@ -1122,25 +1122,41 @@ function ProfileView() {
       )}
 
       <div className="space-y-6">
-        <div className="flex items-center gap-4">
+        {/* Foto de Perfil */}
+        <div className="flex flex-col items-center gap-3">
           <div className="relative">
-            <Avatar className="h-20 w-20">
+            <Avatar className="h-24 w-24">
               <AvatarImage src={session?.user?.avatar || ""} />
-              <AvatarFallback className="text-2xl">
+              <AvatarFallback className="text-3xl">
                 {session?.user?.name?.charAt(0).toUpperCase() || "U"}
               </AvatarFallback>
             </Avatar>
-            <button
-              onClick={() => avatarInputRef.current?.click()}
-              className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg hover:bg-primary/90"
-            >
-              {isUploadingAvatar ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
-            </button>
-            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+            {isUploadingAvatar && (
+              <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                <Loader2 className="h-6 w-6 text-white animate-spin" />
+              </div>
+            )}
           </div>
-          <div>
+          <input 
+            ref={avatarInputRef} 
+            type="file" 
+            accept="image/*" 
+            className="hidden" 
+            onChange={handleAvatarUpload} 
+          />
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => avatarInputRef.current?.click()}
+            disabled={isUploadingAvatar}
+            className="flex items-center gap-2"
+          >
+            <Camera className="h-4 w-4" />
+            {isUploadingAvatar ? "A carregar..." : hasAvatar ? "Alterar foto" : "Adicionar foto 📸"}
+          </Button>
+          <div className="text-center">
             <h2 className="font-semibold">{session?.user?.name}</h2>
-            <p className="text-muted-foreground">{session?.user?.email}</p>
+            <p className="text-sm text-muted-foreground">{session?.user?.email}</p>
             <Badge variant="outline" className="mt-1">
               {session?.user?.role === "ADMIN" ? ptBR.roles.admin : 
                session?.user?.role === "SELLER" ? ptBR.roles.seller : ptBR.roles.buyer}
