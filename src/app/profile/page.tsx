@@ -1,10 +1,10 @@
 "use client";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,19 +14,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Loader2, User } from "lucide-react";
-import ptBR from "@/lib/translations/pt-BR";
+import { Loader2, User, Camera } from "lucide-react";
 
 const PROVINCES = ["Maputo Cidade","Maputo Província","Gaza","Inhambane","Sofala","Manica","Tete","Zambézia","Nampula","Cabo Delgado","Niassa"];
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
   const [phone, setPhone] = useState("");
   const [province, setProvince] = useState("");
+  const [avatar, setAvatar] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (status === "loading") return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   if (!session) { redirect("/?auth=login"); }
@@ -37,8 +39,57 @@ export default function ProfilePage() {
       setBio(data.bio || "");
       setPhone(data.phone || "");
       setProvince(data.province || "");
+      setAvatar(data.avatar || "");
     }).finally(() => setIsFetching(false));
   }, []);
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar tamanho (máx 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem não pode ter mais de 5MB!");
+      return;
+    }
+
+    // Validar tipo
+    if (!file.type.startsWith("image/")) {
+      toast.error("Por favor seleccione uma imagem válida!");
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/user/upload-avatar", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error();
+
+      const data = await res.json();
+      setAvatar(data.avatar);
+
+      // Actualizar a sessão com o novo avatar
+      await update({ avatar: data.avatar });
+
+      toast.success("Foto de perfil actualizada! 📸");
+    } catch {
+      toast.error("Falha ao carregar a foto. Tente novamente.");
+    } finally {
+      setIsUploadingAvatar(false);
+      // Limpar input para permitir seleccionar a mesma imagem novamente
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const handleUpdate = async () => {
     setIsLoading(true);
@@ -49,6 +100,7 @@ export default function ProfilePage() {
         body: JSON.stringify({ name, bio, phone, province }),
       });
       if (!res.ok) throw new Error();
+      await update({ name });
       toast.success("Perfil actualizado com sucesso!");
     } catch {
       toast.error("Falha ao actualizar perfil.");
@@ -64,20 +116,63 @@ export default function ProfilePage() {
       <Navbar />
       <main className="flex-1 container mx-auto px-4 py-6">
         <div className="max-w-2xl mx-auto space-y-6">
-          <h1 className="text-2xl font-bold flex items-center gap-2"><User className="h-6 w-6" /> Meu Perfil</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <User className="h-6 w-6" /> Meu Perfil
+          </h1>
           <Card>
             <CardHeader>
               <div className="flex items-center gap-4">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={session.user.avatar || ""} />
-                  <AvatarFallback className="text-2xl font-bold">{session.user.name?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
-                </Avatar>
-                <div>
+                {/* Avatar com botão de upload */}
+                <div className="relative group">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={avatar || session.user.avatar || ""} />
+                    <AvatarFallback className="text-2xl font-bold">
+                      {session.user.name?.charAt(0).toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  {/* Overlay ao passar o rato */}
+                  <button
+                    onClick={handleAvatarClick}
+                    disabled={isUploadingAvatar}
+                    className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                  >
+                    {isUploadingAvatar ? (
+                      <Loader2 className="h-6 w-6 text-white animate-spin" />
+                    ) : (
+                      <Camera className="h-6 w-6 text-white" />
+                    )}
+                  </button>
+
+                  {/* Input de ficheiro escondido */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                  />
+                </div>
+
+                <div className="flex-1">
                   <h2 className="font-semibold text-lg">{session.user.name}</h2>
-                  <p className="text-muted-foreground">{session.user.email}</p>
+                  <p className="text-muted-foreground text-sm">{session.user.email}</p>
                   <Badge variant="outline" className="mt-1">
                     {session.user.role === "ADMIN" ? "🛡️ Admin" : session.user.role === "SELLER" ? "🏪 Vendedor" : "🛒 Comprador"}
                   </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2 flex items-center gap-1"
+                    onClick={handleAvatarClick}
+                    disabled={isUploadingAvatar}
+                  >
+                    {isUploadingAvatar ? (
+                      <><Loader2 className="h-3 w-3 animate-spin" /> A carregar...</>
+                    ) : (
+                      <><Camera className="h-3 w-3" /> Alterar foto</>
+                    )}
+                  </Button>
                 </div>
               </div>
             </CardHeader>
