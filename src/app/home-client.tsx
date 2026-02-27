@@ -317,10 +317,15 @@ export default function HomeClient() {
             onEdit={() => setView("edit-product")}
             onDelete={() => handleDeleteProduct(selectedProduct.id)}
             onMessage={() => {
+              if (!session?.user) {
+                setAuthDefaultTab("login");
+                setShowAuthModal(true);
+                return;
+              }
               setMessageReceiverId(selectedProduct.seller.id);
               setPrefilledMessage(ptBR.productDetail.productAvailable);
               setPrefilledProductId(selectedProduct.id);
-              setShowMessageSheet(true);
+              setView("messages");
             }}
           />
         ) : (
