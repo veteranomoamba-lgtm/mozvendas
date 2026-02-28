@@ -437,57 +437,92 @@ export default function HomeClient() {
       default:
         return (
           <>
-          {/* Banner Hero — só aparece para utilizadores não logados */}
+          {/* Banner Hero FULL — só aparece para utilizadores não logados */}
           {!session && (
-            <div className="relative w-full mb-8 rounded-2xl overflow-hidden min-h-[280px] md:min-h-[320px] flex items-center"
+            <div
+              className="relative w-full mb-8 overflow-hidden"
               style={{
-                background: "linear-gradient(135deg, #0f3460 0%, #1565c0 40%, #42a5f5 70%, #e0f7fa 100%)"
+                background: "linear-gradient(120deg, #0d2b6e 0%, #1565c0 35%, #1e88e5 60%, #b3e5fc 100%)",
+                borderRadius: "16px",
+                minHeight: "420px",
               }}
             >
-              {/* Elementos decorativos */}
-              <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-6 right-[30%] w-10 h-10 rounded-full border-2 border-white/20" />
-                <div className="absolute bottom-10 left-[42%] w-6 h-6 rounded-full border-2 border-white/15" />
-                <div className="absolute top-16 right-[20%] grid grid-cols-3 gap-1">
-                  {[...Array(9)].map((_, i) => <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/20" />)}
+              {/* Decorações */}
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute top-8 left-[48%] w-14 h-14 rounded-full border-2 border-white/15" />
+                <div className="absolute top-[30%] left-[55%] w-8 h-8 rounded-full border-2 border-white/10" />
+                <div className="absolute top-12 right-[12%] grid grid-cols-3 gap-1.5">
+                  {[...Array(9)].map((_, i) => <div key={i} className="w-2 h-2 rounded-full bg-white/20" />)}
                 </div>
-                <div className="absolute bottom-12 right-[15%] grid grid-cols-3 gap-1">
-                  {[...Array(9)].map((_, i) => <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/10" />)}
+                <div className="absolute bottom-16 right-[8%] grid grid-cols-3 gap-1.5">
+                  {[...Array(9)].map((_, i) => <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/15" />)}
                 </div>
-                <div className="absolute top-8 right-[8%] w-16 h-16 rounded-lg border border-white/10 rotate-12" />
-                <div className="absolute bottom-8 right-[5%] w-10 h-10 rounded-lg border border-white/10 -rotate-6" />
-                <div className="absolute bottom-6 right-[25%] w-8 h-0.5 bg-white/10 rotate-45" />
+                <div className="absolute top-6 right-[4%] w-20 h-20 rounded-xl border border-white/10 rotate-12" />
+                <div className="absolute bottom-10 right-[3%] w-12 h-12 rounded-xl border border-white/10 -rotate-6" />
+                <div className="absolute bottom-8 right-[20%] w-10 h-0.5 bg-white/10 rotate-45" />
+                {/* Quadrado grande fundo direita — efeito visual */}
+                <div className="absolute top-0 right-0 w-[45%] h-full"
+                  style={{ background: "linear-gradient(160deg, transparent 30%, rgba(180,230,255,0.18) 100%)" }}
+                />
               </div>
 
-              {/* Texto lado esquerdo */}
-              <div className="relative z-10 flex-1 px-8 md:px-14 py-10">
-                <h1 className="text-3xl md:text-5xl font-extrabold text-white leading-tight mb-3 uppercase tracking-tight">
-                  O MAIOR<br />
-                  MARKETPLACE<br />
-                  <span className="text-cyan-200">DE MOÇAMBIQUE</span>
-                </h1>
-                <p className="text-white/80 text-lg mb-8">
-                  Compre, venda, transforme.
-                </p>
-                <button
-                  onClick={() => { setAuthDefaultTab("register"); setShowAuthModal(true); }}
-                  className="inline-flex items-center gap-2 px-8 py-3 rounded-full font-bold text-base transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg"
-                  style={{ background: "#f0c040", color: "#1a1a1a" }}
-                >
-                  COMEÇAR AGORA
-                </button>
-              </div>
+              {/* Conteúdo */}
+              <div className="relative z-10 flex flex-col md:flex-row items-stretch min-h-[420px]">
 
-              {/* Imagem lado direito — espaço visual */}
-              <div className="hidden md:flex relative z-10 w-72 h-full items-end justify-center pr-8 pb-0 self-end">
-                <div className="w-52 h-64 rounded-2xl overflow-hidden shadow-2xl"
-                  style={{ background: "linear-gradient(160deg, #42a5f5 0%, #26c6da 100%)" }}
-                >
-                  <div className="w-full h-full flex items-center justify-center">
-                    <div className="text-center text-white/60">
-                      <div className="text-6xl mb-2">🛒</div>
-                      <div className="text-sm font-medium">MOZ VENDAS</div>
+                {/* Lado esquerdo — texto + barra de pesquisa */}
+                <div className="flex-1 flex flex-col justify-center px-8 md:px-14 py-12">
+                  <h1 className="text-4xl md:text-6xl font-extrabold text-white leading-none mb-4 uppercase tracking-tight drop-shadow">
+                    O MAIOR<br />
+                    MARKETPLACE<br />
+                    <span style={{ color: "#7dd8f8" }}>DE MOÇAMBIQUE</span>
+                  </h1>
+                  <p className="text-white/75 text-lg mb-8">
+                    Compre, venda, transforme.
+                  </p>
+
+                  {/* Barra de pesquisa dentro do banner */}
+                  <div className="flex gap-2 max-w-lg mb-8">
+                    <div className="flex-1 flex items-center bg-white rounded-xl px-4 shadow-lg">
+                      <Search className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                      <input
+                        type="text"
+                        placeholder="Buscar produtos..."
+                        className="flex-1 py-3 px-3 text-gray-800 bg-transparent outline-none text-base"
+                        value={filters.search}
+                        onChange={(e) => handleFiltersChange({ search: e.target.value })}
+                      />
                     </div>
+                    <button
+                      className="px-6 py-3 rounded-xl font-bold text-gray-900 shadow-lg hover:opacity-90 active:scale-95 transition-all text-sm"
+                      style={{ background: "#f5c518" }}
+                      onClick={() => handleFiltersChange({ search: filters.search })}
+                    >
+                      Buscar
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => { setAuthDefaultTab("register"); setShowAuthModal(true); }}
+                    className="inline-flex items-center gap-2 px-9 py-4 rounded-full font-extrabold text-base transition-all duration-200 hover:scale-105 active:scale-95 shadow-xl w-fit uppercase tracking-wide"
+                    style={{ background: "#f5c518", color: "#1a1a1a" }}
+                  >
+                    COMEÇAR AGORA
+                  </button>
+                </div>
+
+                {/* Lado direito — imagem/card decorativo */}
+                <div className="hidden md:flex w-80 items-end justify-center pb-0 pr-6 self-end">
+                  <div
+                    className="w-56 h-72 rounded-t-3xl shadow-2xl flex flex-col items-center justify-center relative overflow-hidden"
+                    style={{ background: "linear-gradient(160deg, #29b6f6 0%, #26c6da 60%, #b2ebf2 100%)" }}
+                  >
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <div className="text-8xl mb-2 drop-shadow-lg">🛍️</div>
+                      <div className="text-white font-bold text-lg tracking-wide drop-shadow">MOZ VENDAS</div>
+                      <div className="text-white/70 text-xs mt-1">Marketplace 🇲🇿</div>
+                    </div>
+                    {/* brilho */}
+                    <div className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/20 blur-sm" />
                   </div>
                 </div>
               </div>
@@ -594,8 +629,8 @@ export default function HomeClient() {
 
             {/* Conteúdo principal */}
             <div className="flex-1 min-w-0">
-              {/* Barra de pesquisa mobile */}
-              <div className="md:hidden mb-3 flex gap-2">
+              {/* Barra de pesquisa mobile — só para logados */}
+              <div className={`md:hidden mb-3 flex gap-2 ${session ? "" : "hidden"}`}>
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
