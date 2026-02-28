@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Package } from "lucide-react";
 import ptBR from "@/lib/translations/pt-BR";
 
 export function Footer() {
@@ -17,7 +17,13 @@ export function Footer() {
           {/* Brand */}
           <div className="space-y-4">
             <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-              <Package className="h-5 w-5" />
+              <Image
+                src="/logo.png"
+                alt="MozVendas"
+                width={28}
+                height={28}
+                className="object-contain dark:invert"
+              />
               {ptBR.appName}
             </Link>
             <p className="text-sm text-muted-foreground">
@@ -40,6 +46,12 @@ export function Footer() {
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 {ptBR.footer.becomeSeller}
+              </Link>
+              <Link
+                href="/about"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Sobre Nós
               </Link>
             </nav>
           </div>
