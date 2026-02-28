@@ -30,10 +30,9 @@ export default function ProfilePage() {
   const [isFetching, setIsFetching] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  if (status === "loading") return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-  if (!session) { redirect("/?auth=login"); }
-
+  // TODOS os useEffect ANTES de qualquer return condicional
   useEffect(() => {
+    if (!session) return;
     fetch("/api/profile").then(r => r.json()).then(data => {
       setName(data.name || "");
       setBio(data.bio || "");
@@ -41,23 +40,33 @@ export default function ProfilePage() {
       setProvince(data.province || "");
       setAvatar(data.avatar || "");
     }).finally(() => setIsFetching(false));
-  }, []);
+  }, [session]);
 
-  const handleAvatarClick = () => {
-    fileInputRef.current?.click();
-  };
+  // Returns condicionais SÓ depois de todos os hooks
+  if (status === "loading") return (
+    <div className="flex items-center justify-center min-h-screen">
+      <Loader2 className="h-8 w-8 animate-spin" />
+    </div>
+  );
+
+  if (!session) { redirect("/?auth=login"); }
+
+  if (isFetching) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <Loader2 className="h-8 w-8 animate-spin" />
+    </div>
+  );
+
+  const handleAvatarClick = () => fileInputRef.current?.click();
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validar tamanho (máx 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error("A imagem não pode ter mais de 5MB!");
       return;
     }
-
-    // Validar tipo
     if (!file.type.startsWith("image/")) {
       toast.error("Por favor seleccione uma imagem válida!");
       return;
@@ -74,19 +83,14 @@ export default function ProfilePage() {
       });
 
       if (!res.ok) throw new Error();
-
       const data = await res.json();
       setAvatar(data.avatar);
-
-      // Actualizar a sessão com o novo avatar
       await update({ avatar: data.avatar });
-
       toast.success("Foto de perfil actualizada! 📸");
     } catch {
       toast.error("Falha ao carregar a foto. Tente novamente.");
     } finally {
       setIsUploadingAvatar(false);
-      // Limpar input para permitir seleccionar a mesma imagem novamente
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -109,8 +113,6 @@ export default function ProfilePage() {
     }
   };
 
-  if (isFetching) return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -125,26 +127,22 @@ export default function ProfilePage() {
                 {/* Avatar com botão de upload */}
                 <div className="relative group">
                   <Avatar className="h-24 w-24">
-                    <AvatarImage src={avatar || session.user.avatar || ""} />
+                    <AvatarImage src={avatar || session!.user.avatar || ""} />
                     <AvatarFallback className="text-2xl font-bold">
-                      {session.user.name?.charAt(0).toUpperCase() || "U"}
+                      {session!.user.name?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
-
                   {/* Overlay ao passar o rato */}
                   <button
                     onClick={handleAvatarClick}
                     disabled={isUploadingAvatar}
                     className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                   >
-                    {isUploadingAvatar ? (
-                      <Loader2 className="h-6 w-6 text-white animate-spin" />
-                    ) : (
-                      <Camera className="h-6 w-6 text-white" />
-                    )}
+                    {isUploadingAvatar
+                      ? <Loader2 className="h-6 w-6 text-white animate-spin" />
+                      : <Camera className="h-6 w-6 text-white" />
+                    }
                   </button>
-
-                  {/* Input de ficheiro escondido */}
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -155,10 +153,10 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="flex-1">
-                  <h2 className="font-semibold text-lg">{session.user.name}</h2>
-                  <p className="text-muted-foreground text-sm">{session.user.email}</p>
+                  <h2 className="font-semibold text-lg">{session!.user.name}</h2>
+                  <p className="text-muted-foreground text-sm">{session!.user.email}</p>
                   <Badge variant="outline" className="mt-1">
-                    {session.user.role === "ADMIN" ? "🛡️ Admin" : session.user.role === "SELLER" ? "🏪 Vendedor" : "🛒 Comprador"}
+                    {session!.user.role === "ADMIN" ? "🛡️ Admin" : session!.user.role === "SELLER" ? "🏪 Vendedor" : "🛒 Comprador"}
                   </Badge>
                   <Button
                     variant="outline"
@@ -167,11 +165,10 @@ export default function ProfilePage() {
                     onClick={handleAvatarClick}
                     disabled={isUploadingAvatar}
                   >
-                    {isUploadingAvatar ? (
-                      <><Loader2 className="h-3 w-3 animate-spin" /> A carregar...</>
-                    ) : (
-                      <><Camera className="h-3 w-3" /> Alterar foto</>
-                    )}
+                    {isUploadingAvatar
+                      ? <><Loader2 className="h-3 w-3 animate-spin" /> A carregar...</>
+                      : <><Camera className="h-3 w-3" /> Alterar foto</>
+                    }
                   </Button>
                 </div>
               </div>
@@ -192,7 +189,9 @@ export default function ProfilePage() {
                 <Label>Província</Label>
                 <Select value={province} onValueChange={setProvince}>
                   <SelectTrigger><SelectValue placeholder="Seleccione a sua província" /></SelectTrigger>
-                  <SelectContent>{PROVINCES.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                  <SelectContent>
+                    {PROVINCES.map(p => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                  </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
