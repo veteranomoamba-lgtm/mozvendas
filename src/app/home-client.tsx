@@ -436,6 +436,63 @@ export default function HomeClient() {
 
       default:
         return (
+          <>
+          {/* Banner Hero — só aparece para utilizadores não logados */}
+          {!session && (
+            <div className="relative w-full mb-8 rounded-2xl overflow-hidden min-h-[280px] md:min-h-[320px] flex items-center"
+              style={{
+                background: "linear-gradient(135deg, #0f3460 0%, #1565c0 40%, #42a5f5 70%, #e0f7fa 100%)"
+              }}
+            >
+              {/* Elementos decorativos */}
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-6 right-[30%] w-10 h-10 rounded-full border-2 border-white/20" />
+                <div className="absolute bottom-10 left-[42%] w-6 h-6 rounded-full border-2 border-white/15" />
+                <div className="absolute top-16 right-[20%] grid grid-cols-3 gap-1">
+                  {[...Array(9)].map((_, i) => <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/20" />)}
+                </div>
+                <div className="absolute bottom-12 right-[15%] grid grid-cols-3 gap-1">
+                  {[...Array(9)].map((_, i) => <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/10" />)}
+                </div>
+                <div className="absolute top-8 right-[8%] w-16 h-16 rounded-lg border border-white/10 rotate-12" />
+                <div className="absolute bottom-8 right-[5%] w-10 h-10 rounded-lg border border-white/10 -rotate-6" />
+                <div className="absolute bottom-6 right-[25%] w-8 h-0.5 bg-white/10 rotate-45" />
+              </div>
+
+              {/* Texto lado esquerdo */}
+              <div className="relative z-10 flex-1 px-8 md:px-14 py-10">
+                <h1 className="text-3xl md:text-5xl font-extrabold text-white leading-tight mb-3 uppercase tracking-tight">
+                  O MAIOR<br />
+                  MARKETPLACE<br />
+                  <span className="text-cyan-200">DE MOÇAMBIQUE</span>
+                </h1>
+                <p className="text-white/80 text-lg mb-8">
+                  Compre, venda, transforme.
+                </p>
+                <button
+                  onClick={() => { setAuthDefaultTab("register"); setShowAuthModal(true); }}
+                  className="inline-flex items-center gap-2 px-8 py-3 rounded-full font-bold text-base transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg"
+                  style={{ background: "#f0c040", color: "#1a1a1a" }}
+                >
+                  COMEÇAR AGORA
+                </button>
+              </div>
+
+              {/* Imagem lado direito — espaço visual */}
+              <div className="hidden md:flex relative z-10 w-72 h-full items-end justify-center pr-8 pb-0 self-end">
+                <div className="w-52 h-64 rounded-2xl overflow-hidden shadow-2xl"
+                  style={{ background: "linear-gradient(160deg, #42a5f5 0%, #26c6da 100%)" }}
+                >
+                  <div className="w-full h-full flex items-center justify-center">
+                    <div className="text-center text-white/60">
+                      <div className="text-6xl mb-2">🛒</div>
+                      <div className="text-sm font-medium">MOZ VENDAS</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="flex gap-4">
             {/* Sidebar de Filtros - apenas desktop */}
             <aside className="hidden md:block w-56 flex-shrink-0">
@@ -632,6 +689,7 @@ export default function HomeClient() {
             )}
             </div>
           </div>
+          </>
         );
     }
   };
